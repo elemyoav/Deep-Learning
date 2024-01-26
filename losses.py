@@ -17,8 +17,15 @@ class SoftmaxLayer:
     def grad_w(self, X, C):
         return np.dot(X, self.forward(X) - C.T)
     
+    def grad_b(self, X, C):
+        return None
+    
     def loss(self, X, C):
         return np.sum(-np.log(self.forward(X)) * C.T) / X.shape[1]
+
+    def update_weights(self, Θ, lr):
+        dW, db = Θ
+        self.W -= lr * dW
 
     def grad_test_x(self, x, c):
         import matplotlib.pyplot as plt
@@ -41,12 +48,63 @@ class SoftmaxLayer:
         plt.legend()
         plt.show()
 
+class LinearLayer:
+    def __init__(self, input_size, output_size):
+        self.W = np.random.randn(output_size, input_size)
+        self.b = np.random.randn(output_size, 1)
+    
+    def forward(self, x):
+        return np.dot(self.W, x) + self.b
+
+    def loss(self, x, y):
+        y_pred = self.forward(x)
+        return np.mean((y_pred - y) ** 2)
+    
+    def update_weights(self, Θ, lr):
+        dW, db = Θ
+        self.W -= lr * dW
+        self.b -= lr * db
+
+    def grad_w(self, x, y):
+        y_pred = self.forward(x)
+        return 2 * np.dot((y_pred - y), x.T) / x.shape[1]
+
+    def grad_b(self, x, y):
+        y_pred = self.forward(x)
+        return 2 * np.mean(y_pred - y, axis=1, keepdims=True)
+
+    def grad_x(self, x, y):
+        y_pred = self.forward(x)
+        return 2 * np.dot(self.W.T, (y_pred - y)) / x.shape[1]
+    
+    def grad_test_x(self, x, c):
+        import matplotlib.pyplot as plt
+        E = []
+        E2 = []
+        eps = 1.
+        d = np.random.randn(x.shape[0], 1)
+        d = d / np.linalg.norm(d)
+
+        print(self.grad_x(x, c).shape)
+
+        for _ in range(15):
+            y1 = np.linalg.norm(self.loss(x + eps * d, c) - self.loss(x, c))
+            y2 = np.linalg.norm(self.loss(x + eps * d, c) - (self.loss(x, c) + eps * d.T @ self.grad_x(x, c)))
+            E.append(y1)
+            E2.append(y2)
+            eps = eps * 0.5
+        
+        plt.plot(E, label='first order error')
+        plt.plot(E2, label='second order error')
+        plt.yscale('log')
+        plt.legend()
+        plt.show()
 
 if __name__ == '__main__':
-    X = np.array([[1, 2, 3], [4,5,6]]).T
-    C = np.array([[0, 0, 1, 0], [1,0,0,0]]).T
-    l = SoftmaxLayer(3, 4)
-    l.grad_test_x(X, C)
+    X = np.array([[1, 2, 3]]).T
+
+    l = LinearLayer(3, 3)
+    l.grad_test_x(X, X)
 
     # losses = []
     # for _ in range(100):
