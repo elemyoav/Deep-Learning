@@ -95,3 +95,66 @@ def plot_loss_and_accuracy(tloss, taccuracy, vloss, vaccuracy):
     plt.plot(vaccuracy)
 
     plt.show()
+
+
+def Gradient_test(loss_layer, x, y):
+    grad = loss_layer.grad_Θ(x, y)
+    d = np.random.randn(grad.shape[0], 1)
+    d = d / np.linalg.norm(d)
+    eps = 1.
+    E = []
+    E2 = []
+    for _ in range(30):
+        y1 = np.linalg.norm(loss_layer.loss_Θ(x, y, dΘ = eps * d) - loss_layer.loss_Θ(x, y))
+        y2 = np.linalg.norm(loss_layer.loss_Θ(x, y, dΘ = eps * d) - loss_layer.loss_Θ(x, y) - np.dot(eps * d.T, grad))
+        E.append(y1)
+        E2.append(y2)
+        eps = eps * 0.5
+    
+    plt.plot(E, label='first order error')
+    plt.plot(E2, label='second order error')
+    plt.yscale('log')
+    plt.legend()
+    plt.show()
+
+def JacobianTest(layer, x, residual=False):
+    
+    if residual:
+        dim = layer.W1.size + layer.W2.size + layer.b1.size + layer.b2.size + x.size
+    else:
+        dim = layer.W.size + layer.b.size + x.size
+
+    d = np.random.randn(dim, 1)
+    d = d / np.linalg.norm(d)
+        
+    eps = 1.
+    E = []
+    E2 = []
+
+    for _ in range(30):
+        y1 = np.linalg.norm(layer.forward_Θ(x, Θ=eps * d) - layer.forward_Θ(x))
+        y2 = np.linalg.norm(layer.forward_Θ(x, Θ=eps * d) - layer.forward_Θ(x) - layer.JacΘMv(x, eps * d))
+        E.append(y1)
+        E2.append(y2)
+        eps = eps * 0.5
+
+    plt.plot(E, label='first order error')
+    plt.plot(E2, label='second order error')
+    plt.yscale('log')
+    plt.legend()
+    plt.show()
+
+def JacobianTransposeTest(layer, x):
+    dimv = layer.W.size + layer.b.size + x.size
+    dimu = layer.W.shape[0]
+    v = np.random.randn(dimv, 1)
+    u = np.random.randn(dimu, 1)
+
+    j1 = u.T @ layer.JacΘMv(x, v)
+    j2 = v.T @ layer.JacΘTMv(x, u)
+
+    passed = np.abs(j1 - j2) < 1e-10
+    return j1, j2, passed
+
+def add_row_of_ones(X):
+    return np.vstack((X, np.ones(X.shape[1])))
