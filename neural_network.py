@@ -110,11 +110,11 @@ class GenericNetwork:
 
         # backpropagate the gradient for each layer in reverse order
         for i, layer in reversed(list(enumerate(self.layers))):
-            dW = layer.JacTWMv(self.cache[i], dx)
+            dW = layer.JacWTMv(self.cache[i], dx)
 
-            db = layer.JacTbMv(self.cache[i], dx)
+            db = layer.JacbTMv(self.cache[i], dx)
 
-            dx = layer.JacTxMv(self.cache[i], dx)
+            dx = layer.JacxTMv(self.cache[i], dx)
 
             # add the gradient of the layer to the list of gradients
             gradients.append((dW, db))
@@ -185,7 +185,7 @@ class GenericNetwork:
         Returns:
         a vector of size (total number of parameters, 1)
         """
-        
+
         grads = []
         self.loss_Θ(x, y)
         grad = self.output_layer.grad_Θ(self.cache[-1], y)
@@ -194,7 +194,7 @@ class GenericNetwork:
         for i, layer in reversed(list(enumerate(self.layers))):
             grad = layer.JacΘTMv(self.cache[i], dx)
             grads.append(grad)
-            dx = layer.JacTxMv(self.cache[i], dx)
+            dx = layer.JacxTMv(self.cache[i], dx)
 
         self.clear_cache()
         grads.reverse()
