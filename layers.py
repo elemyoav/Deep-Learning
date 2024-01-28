@@ -4,22 +4,65 @@ from utils import col_mean, JacobianTest, JacobianTransposeTest
 
 
 class HiddenLayer:
+    """
+    Hidden layer with activation function
+    Used as a base class for other layers
+    """
+
     def __init__(self, input_size, output_size, activation, dactivation):
+        """
+        input_size: number of input features
+        output_size: number of output features
+        activation: activation function
+        dactivation: derivative of activation function
+        """
+
         self.W = np.random.randn(output_size, input_size)
         self.b = np.random.randn(output_size, 1)
         self.activation = activation
         self.dactivation = dactivation
 
     def forward(self, X):
+        """
+        computes σ(WX + b)
+
+        Parameters:
+        X: input matrix of size (input_size, batch_size)
+
+        Returns:
+        output matrix of size (output_size, batch_size)
+        """
+
         Z = np.dot(self.W, X) + self.b
         return self.activation(Z)
 
     def JacxMv(self, x, v):
+        """
+        Computes the Jacobian of the activation function with respect to x times v
+
+        Parameters:
+        x: input vector of size (input_size, 1)
+        v: vector of size (output_size, 1)
+
+        Returns:
+        Jacobian of the activation function with respect to x times v
+        """
+
         z = np.dot(self.W, x) + self.b
         dActivation_dZ = col_mean(self.dactivation(z))
         return (dActivation_dZ * self.W) @ v
     
     def JacWMv(self, x, v):
+        """
+        Computes the Jacobian of the activation function with respect to W times v
+
+        Parameters:
+        x: input vector of size (input_size, 1)
+        v: vector of size (output_size * input_size, 1)
+
+        Returns:
+        Jacobian of the activation function with respect to W times v
+        """
 
         ##################################################
         # temporary fix since v is transposed for some reason
@@ -33,52 +76,141 @@ class HiddenLayer:
         return np.diag(dActivation_dZ.flatten()) @ np.kron(x.T, np.eye(self.W.shape[0])) @ v
         
     def JacbMv(self, x, v):
+        """
+        Computes the Jacobian of the activation function with respect to b times v
+
+        Parameters:
+        x: input vector of size (input_size, 1)
+        v: vector of size (output_size, 1)
+
+        Returns:
+        Jacobian of the activation function with respect to b times v
+        """
+
         z = np.dot(self.W, x) + self.b
         dActivation_dZ = col_mean(self.dactivation(z))
         return dActivation_dZ * v
 
-    def JacTxMv(self, X, V):
-        # Jacobian of ReLU with respect to X times V
+    def JacxTMv(self, X, V):
+        """
+        Computes the Jacobian of the activation function with respect to x transpose times v
+
+        Parameters:
+        X: input matrix of size (input_size, batch_size)
+        V: matrix of size (output_size, batch_size)
+
+        Returns:
+        Jacobian of the activation function with respect to x transpose times v
+        """
+
         Z = np.dot(self.W, X) + self.b
         dActivation_dZ = col_mean(self.dactivation(Z))
         return np.dot(self.W.T, dActivation_dZ * V)
 
-    def JacTWMv(self, X, V):
-        # Jacobian of ReLU with respect to W times V
+    def JacWTMv(self, X, V):
+        """
+        Computes the Jacobian of the activation function with respect to W transpose times v
+
+        Parameters:
+        X: input matrix of size (input_size, batch_size)
+        V: matrix of size (output_size * input_size, batch_size)
+
+        Returns:
+        Jacobian of the activation function with respect to W transpose times v
+        """
+
         Z = np.dot(self.W, X) + self.b
         dActivation_dZ = self.dactivation(Z)
         return (dActivation_dZ * V) @ X.T / X.shape[1]
 
-    def JacTbMv(self, X, V):
-        # Jacobian of ReLU with respect to b times V
+    def JacbTMv(self, X, V):
+        """
+        Computes the Jacobian of the activation function with respect to b transpose times v
+
+        Parameters:
+        X: input matrix of size (input_size, batch_size)
+        V: matrix of size (output_size, batch_size)
+
+        Returns:
+        Jacobian of the activation function with respect to b transpose times v
+        """
+
         Z = np.dot(self.W, X) + self.b
         dActivation_dZ = col_mean(self.dactivation(Z))
         return dActivation_dZ * V
     
     def unpack_Θ(self, dΘ):
+        """
+        Given a vector dΘ = [vec(dW), vec(db), dx].T
+        unpacks it to dW, db, dx
+        """
+
         dW = dΘ[:self.W.size].reshape(self.W.shape)
         db = dΘ[self.W.size:self.W.size + self.b.size].reshape(self.b.shape)
         dx = dΘ[self.W.size + self.b.size:].reshape(-1, 1)
         return dW, db, dx
     
     def forward_Θ(self, x, Θ=None):
+        """
+        Computes the result of activating the network on x when we nudge the
+        weights and x by Θ
+
+        Parameters:
+        x: input vector of size (input_size, 1)
+        Θ: the vectorized parameters to nudge, vector of size (output_size * input_size + output_size + input_size, 1)
+
+        Returns:
+        the result of activating the network on x when we nudge the weights and x by Θ
+        """
+
+        # if Θ is not provided, return the result of activating the network on x
         if Θ is None:
             return self.forward(x)
+        
+        # unpack Θ to dW, db, dx
         dW, db, dx = self.unpack_Θ(Θ)
+
+        # nudge the weights and x
         self.W += dW
         self.b += db
         y = self.forward(x + dx)
+
+        # reset the weights and x
         self.W -= dW
         self.b -= db
+
+        # return the result of activating the network on x when we nudge the weights and x by Θ
         return y
     
     def JacΘMv(self, x, v):
+        """
+        Computes the Jacobian of the activation function with respect to Θ times v
+
+        Parameters:
+        x: input vector of size (input_size, 1)
+        v: vector of size (output_size * input_size + output_size + input_size, 1)
+
+        Returns:
+        Jacobian of the activation function with respect to Θ times v
+        """
+
         dWv = self.JacWMv(x, v[:self.W.size])
         dbv = self.JacbMv(x, v[self.W.size:self.W.size + self.b.size])
         dxv = self.JacxMv(x, v[self.W.size + self.b.size:])
         return dxv + dWv + dbv
     
     def JacΘTMv(self, x, v):
+        """
+        Computes the Jacobian of the activation function with respect to Θ transpose times v
+
+        Parameters:
+        x: input vector of size (input_size, 1)
+        v: vector of size (output_size * input_size + output_size + input_size, 1)
+
+        Returns:
+        Jacobian of the activation function with respect to Θ transpose times v
+        """
+
         dWv = self.JacTWMv(x, v).reshape(-1, 1)
         dbv = self.JacTbMv(x, v)
         dxv = self.JacTxMv(x, v)
@@ -86,8 +218,22 @@ class HiddenLayer:
         return np.vstack((dWv, dbv, dxv))
 
     def update_weights(self, Θ, lr):
+        """
+        Updates the weights and biases of the layer
+
+        Parameters:
+        Θ: the vectorized parameters to nudge, vector of size (output_size * input_size + output_size, 1)
+        lr: the learning rate
+
+        Returns:
+        None
+        """
+
+        # unpack Θ to dW, db
         dW, db = Θ
         dW = dW.reshape(self.W.shape)
+
+        # update the weights and biases
         self.W -= lr * dW
         self.b -= lr * db
 
@@ -105,8 +251,8 @@ class HiddenResidualLayer:
         Z1 = np.dot(self.W1, X) + self.b1
         A1 = self.activation(Z1)
         Z2 = np.dot(self.W2, A1) + self.b2
-        return self.activation(X + Z2)
-    
+        return X + Z2
+   
     def JacxMv(self, x, v):
         da =col_mean(self.dactivation(np.dot(self.W1, x) + self.b1)).flatten()
         J = self.W2 @ np.diag(da) @ self.W1 + np.eye(self.W2.shape[0])
@@ -158,7 +304,7 @@ class HiddenResidualLayer:
         da = col_mean(self.dactivation(np.dot(self.W1, x) + self.b1))
         return da * (self.W2.T @ v)
     
-    def JacTW2Mv(self, x, v):#?
+    def JacTW2Mv(self, x, v):
         a = self.activation(np.dot(self.W1, x) + self.b1)
         return np.reshape(np.kron(a, np.eye(self.W2.shape[0])) @ v, self.W2.shape)
     
@@ -202,25 +348,82 @@ class HiddenResidualLayer:
         self.W2 -= lr * dW2
         self.b1 -= lr * db1
         self.b2 -= lr * db2
+    
+    def JacΘTMv(self, x, v):
+        dW1v = self.JacTW1Mv(x, v).reshape(-1, 1)
+        dW2v = self.JacTW2Mv(x, v).reshape(-1, 1)
+        db1v = self.JacTb1Mv(x, v)
+        db2v = self.JacTb2Mv(x, v)
+        dxv = self.JacTxMv(x, v)
+
+        return np.vstack((dW1v, dW2v, db1v, db2v, dxv))
+
 
 class ReLULayer(HiddenLayer):
+    """
+    Hidden layer with ReLU activation function
+    """
+
     def __init__(self, input_size, output_size):
         super().__init__(input_size, output_size, self.relu, self.drelu)
     
     def relu(self, Z):
+        """
+        computes ReLU(Z)
+
+        Parameters:
+        Z: input matrix of size (output_size, batch_size)
+
+        Returns:
+        ReLU(Z)
+        """
         return np.maximum(Z, 0)
     
     def drelu(self, Z):
+        """
+        computes the derivative of ReLU(Z)
+
+        Parameters:
+        Z: input matrix of size (output_size, batch_size)
+
+        Returns:
+        the derivative of ReLU(Z)
+        """
+
         return (Z > 0).astype(float)
 
 class TanhLayer(HiddenLayer):
+    """
+    Hidden layer with tanh activation function
+    """
+
     def __init__(self, input_size, output_size):
         super().__init__(input_size, output_size, self.tanh, self.dtanh)
     
     def tanh(self, Z):
+        """
+        computes tanh(Z)
+
+        Parameters:
+        Z: input matrix of size (output_size, batch_size)
+
+        Returns:
+        tanh(Z)
+        """
+
         return (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z))
     
     def dtanh(self, Z):
+        """
+        computes the derivative of tanh(Z)
+
+        Parameters:
+        Z: input matrix of size (output_size, batch_size)
+
+        Returns:
+        the derivative of tanh(Z)
+        """
+        
         return 1 - self.tanh(Z) ** 2
 
 class ResidualTanhLayer(HiddenResidualLayer):
@@ -246,4 +449,5 @@ class ResidualReLULayer(HiddenResidualLayer):
 if __name__ == '__main__':
     l = ResidualTanhLayer(2, 4)
     x = np.array([[1, 2]]).T
-    JacobianTest(l, x, residual=True)
+    #JacobianTest(l, x, residual=True)
+    print(JacobianTransposeTest(l, x, residual=True))
