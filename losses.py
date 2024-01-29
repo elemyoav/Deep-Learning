@@ -94,7 +94,7 @@ class SoftmaxLayer:
         None
         """
 
-        dW, db = Θ
+        dW, _ = Θ
         self.W -= lr * dW
 
     def forward_Θ(self, x, Θ=None):

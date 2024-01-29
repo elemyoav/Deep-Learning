@@ -157,7 +157,7 @@ class GenericNetwork:
 
         # in the case where we don't move the parameters
         if dΘ is None:
-            return self.loss(x, y)
+            return self.loss(x, y, clear_cache=False)
         
         self.cache = [x]
         start = 0
@@ -199,7 +199,6 @@ class GenericNetwork:
         self.clear_cache()
         grads.reverse()
         return np.vstack(grads)
-
 
 class ResidualNeuralNetwork:
     """
