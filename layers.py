@@ -237,6 +237,12 @@ class HiddenLayer:
         self.W -= lr * dW
         self.b -= lr * db
 
+    def size(self):
+        """
+        Returns the number of parameters in the layer
+        """
+
+        return self.W.size + self.b.size
 
 class HiddenResidualLayer:
     """
@@ -536,6 +542,12 @@ class HiddenResidualLayer:
 
         return np.vstack((dW1v, dW2v, db1v, db2v, dxv))
 
+    def size(self):
+        """
+        Returns the number of parameters in the layer
+        """
+
+        return self.W1.size + self.W2.size + self.b1.size + self.b2.size
 
 class ReLULayer(HiddenLayer):
     """

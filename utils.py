@@ -358,3 +358,56 @@ def NetworkGradientTest(N, x, y):
     plt.yscale('log')
     plt.legend()
     plt.show()
+
+
+def NetworkJacobianTest(N, x, residual=False):
+    """
+    Plots the results of the network Jacobian test presented in class in log scale.
+    the method plots 2 lines, one for the first order error and one for the second order error.
+    we expect the first order error to decrease linearly and the second order error to decrease quadratically
+
+    Parameters:
+    N (NeuralNetwork): The network to test, must have the methods JacΘMv and forward_Θ.
+    where JacΘMv is the Jacobian of the network with respect to Θ times a vector v,
+    and forward_Θ is the forward pass of the network nudged by Θ.
+    x (numpy.ndarray): The input data.
+    residual (bool): Whether the network is a residual network or not.
+
+    Returns:
+    None
+    """
+
+    # set the dimensions of d according to the type of network
+    if residual:
+        dim = N.size() + x.size
+    else:
+        dim = N.size() + x.size
+
+    # d would be a random unit vector
+    d = np.random.randn(dim, 1)
+    d = d / np.linalg.norm(d)
+    
+    # we start with a large epsilon and decrease it by half each iteration
+    eps = 1.
+
+    # we store the errors in these lists
+    E = []
+    E2 = []
+
+    for _ in range(30):
+        # compute || f(Θ + eps * d) - f(Θ) ||, expected to be O(ε)
+        y1 = np.linalg.norm(N.forward_Θ(x, Θ=eps * d) - N.forward_Θ(x))
+
+        # compute || f(Θ + eps * d) - (f(Θ) + JacΘMv * eps * d) ||, expected to b O(ε^2)
+        y2 = np.linalg.norm(N.forward_Θ(x, Θ=eps * d) - N.forward_Θ(x) - N.JacΘMv(x, eps * d))
+
+        E.append(y1)
+        E2.append(y2)
+        eps = eps * 0.5
+    
+    # plot the results in log scale
+    plt.plot(E, label='first order error')
+    plt.plot(E2, label='second order error')
+    plt.yscale('log')
+    plt.legend()
+    plt.show()

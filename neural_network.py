@@ -3,7 +3,7 @@ from layers import ReLULayer, TanhLayer, ResidualReLULayer, ResidualTanhLayer
 from losses import SoftmaxLayer
 import scipy.io
 import matplotlib.pyplot as plt
-from utils import plot_data, plot_loss_and_accuracy, SGD, NetworkGradientTest
+from utils import plot_data, plot_loss_and_accuracy, SGD, NetworkGradientTest, NetworkJacobianTest
 LR = 5e-8
 
 
@@ -16,8 +16,8 @@ class GenericNetwork:
     layers: a list of layers, each layer should be an extention of HiddenLayer
     """
 
-    def __init__(self, output_layer, layers=[]):
-        self.layers = layers
+    def __init__(self, output_layer, hidden_layers=[]):
+        self.hidden_layers = hidden_layers
         self.output_layer = output_layer
         self.cache = [] # cache for forward pass
 
@@ -67,7 +67,7 @@ class GenericNetwork:
         """
 
         self.cache = [X]
-        for layer in self.layers:
+        for layer in self.hidden_layers:
             X = layer.forward(X)
             self.cache.append(X)
         
@@ -109,7 +109,7 @@ class GenericNetwork:
         gradients.append((dW, db))
 
         # backpropagate the gradient for each layer in reverse order
-        for i, layer in reversed(list(enumerate(self.layers))):
+        for i, layer in reversed(list(enumerate(self.hidden_layers))):
             dW = layer.JacWTMv(self.cache[i], dx)
 
             db = layer.JacbTMv(self.cache[i], dx)
@@ -139,7 +139,7 @@ class GenericNetwork:
         self.output_layer.update_weights(Θ, lr)
 
         for i, Θ in enumerate(gradients):
-            self.layers[i].update_weights(Θ, lr)
+            self.hidden_layers[i].update_weights(Θ, lr)
 
     def loss_Θ(self, x, y, dΘ=None):
         """
@@ -163,7 +163,7 @@ class GenericNetwork:
         start = 0
 
         # moves each layer by the corresponding part of dΘ
-        for layer in self.layers:
+        for layer in self.hidden_layers:
             end = start + layer.W.size + layer.b.size + x.size
             x = layer.forward_Θ(x, dΘ[start:end])
             self.cache.append(x)
@@ -191,7 +191,7 @@ class GenericNetwork:
         grad = self.output_layer.grad_Θ(self.cache[-1], y)
         dx = self.output_layer.grad_x(self.cache[-1], y)
         grads.append(grad)
-        for i, layer in reversed(list(enumerate(self.layers))):
+        for i, layer in reversed(list(enumerate(self.hidden_layers))):
             grad = layer.JacΘTMv(self.cache[i], dx)
             grads.append(grad)
             dx = layer.JacxTMv(self.cache[i], dx)
@@ -199,7 +199,68 @@ class GenericNetwork:
         self.clear_cache()
         grads.reverse()
         return np.vstack(grads)
+    
+    def size(self):
+        """
+        Computes the total number of parameters in the network
 
+        Returns:
+        an integer
+        """
+
+        return sum([layer.size() for layer in self.hidden_layers]) + self.output_layer.size()
+
+    def JacΘMv(self, x, v):
+        """
+        Computes the Jacobian of the forward function with respect to all of it's parameters
+        multiplied by a vector v, that is computes J(x) * v
+
+        Parameters:
+        x is a matrix of size (input_size, 1)
+        v is a vector of size (total number of parameters, 1)
+
+        Returns:
+        a vector of size (output_size, 1)
+        """
+
+        self.forward(x)
+        Vs = [ v[i: i + layer.size()] for i, layer in enumerate(self.hidden_layers)]
+
+        Jv = self.output_layer.JacΘMv(self.cache[-1], Vs[-1])
+        for i, layer in reversed(list(enumerate(self.hidden_layers[:-1]))):
+            Jv += layer.JacΘTMv(self.cache[i], self.hidden_layers[i+1].JacxMv(self.cache[i+1], Vs[i]))
+
+        return Jv
+    
+    def forward_Θ(self, X, Θ=None):
+        """
+        Computes the output of the network on a given batch of data
+        when nudging the parameters by Θ, that is we move all the parameters in the network
+
+        Parameters:
+        X is a matrix of size (input_size, batch_size)
+        Θ is a vector of size (total number of parameters, 1)
+
+        Returns:
+        a matrix of size (output_size, batch_size)
+        """
+
+        if Θ is None:
+            return self.forward(X)
+        
+        self.cache = [X]
+        start = 0
+
+        # moves each layer by the corresponding part of Θ
+        for layer in self.hidden_layers:
+            end = start + layer.W.size + layer.b.size + X.size
+            X = layer.forward_Θ(X, Θ[start:end])
+            self.cache.append(X)
+            start = end
+
+        Y = self.output_layer.forward_Θ(X, Θ[start:])
+        return Y
+    
 class ResidualNeuralNetwork:
     """
     Generic neural network class, can be used to create any fully connected neural network.
@@ -330,7 +391,7 @@ class ResidualNeuralNetwork:
         for i, Θ in enumerate(gradients):
             self.layers[i].update_weights(Θ, lr)
     
-    def forward_Θ(self, X, Θ):
+    def forward_Θ(self, X, Θ = None):
         """
         Computes the output of the network on a given batch of data
         when nudging the parameters by Θ, that is we move all the parameters in the network
@@ -343,6 +404,9 @@ class ResidualNeuralNetwork:
         a matrix of size (output_size, batch_size)
         """
 
+        if Θ is None:
+            return self.forward(X)
+        
         self.cache = [X]
         for layer in self.layers:
             X = layer.forward_Θ(X, Θ)
@@ -416,25 +480,25 @@ class ResidualNeuralNetwork:
 if __name__ == '__main__':
     # Dummy data (replace with real data)
     # Example usage with a small neural network
-    layer1 = ResidualReLULayer(2, 64)  # Example sizes
-    layer2 = ResidualTanhLayer(2, 128)
-    layer3 = ResidualReLULayer(2, 512)
+    # layer1 = ReLULayer(2, 64)  # Example sizes
+    # layer2 = ReLULayer(2, 128)
+    # layer3 = ReLULayer(2, 512)
     loss_layer = SoftmaxLayer(2, 2)
 
-    NN = ResidualNeuralNetwork(
+    NN = GenericNetwork(
         loss_layer,
         [
-            layer1,
-            layer2,
-            layer3
+            # layer1,
+            # layer2,
+            # layer3
         ]
     )
     swissroll = scipy.io.loadmat('HW1_Data(1)/SwissRollData.mat')
-    Xt = swissroll['Yt']
+    Xt = swissroll['Yt'][:, 0].reshape(-1, 1)
     Yt = swissroll['Ct']
     Xv = swissroll['Yv']
     Yv = swissroll['Cv']
 
-    SGD(Xt, Yt, Xv, Yv, NN, lr=LR)
+    NetworkJacobianTest(NN, Xt)
 
 

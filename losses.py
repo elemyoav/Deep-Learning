@@ -184,6 +184,13 @@ class SoftmaxLayer:
         dx = self.grad_x(X, C)
         dΘ = np.concatenate((dW.reshape(-1, 1), dx), axis=0)
         return dΘ
+    
+    def size(self):
+        """
+        Returns the number of parameters in the layer
+        """
+
+        return self.W.size
 
 class LinearLayer:
     """
@@ -341,6 +348,13 @@ class LinearLayer:
         dΘ = np.concatenate((dW.reshape(-1, 1), db, dx), axis=0)
         return dΘ
 
+    def size(self):
+        """
+        Returns the number of parameters in the layer
+        """
+
+        return self.W.size + self.b.size
+    
 if __name__ == '__main__':
     C = np.array([[1, 0, 0]]).T
     
