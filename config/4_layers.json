@@ -1,0 +1,72 @@
+{
+    "lr": "5e-5",
+    "batch_size": "16",
+    "epochs": "100",
+    "hiddenlayers":[
+        {
+            "hidden_units":"32",
+            "activation": "relu"
+        },
+        {
+            "hidden_units":"64",
+            "activation": "relu"
+        },
+        {
+            "hidden_units":"64",
+            "activation": "relu"
+        },
+        {
+            "hidden_units":"64",
+            "activation": "relu"
+        }
+    ],
+    "results":[{
+        "number_of_data_points":"20000",
+        "dataset": "swissroll",
+        "training_accuracy": "0.9191",
+        "validation_accuracy": "0.9208",
+        "training_loss": "0.37828649936646747",
+        "validation_loss": "0.3986264567244625"
+        },
+        {
+        "number_of_data_points":"20000",
+        "dataset": "peaks",
+        "training_accuracy": "0.83816",
+        "validation_accuracy": "0.83504",
+        "training_loss": "1.4503264029257759",
+        "validation_loss": "1.4641262675102498"
+        },
+        {
+        "number_of_data_points":"20000",
+        "dataset": "gmm",
+        "training_accuracy": "0.92828",
+        "validation_accuracy": "0.92144",
+        "training_loss": "1.0847327222795131",
+        "validation_loss": "1.1329189900619603"
+        },
+        {
+        "number_of_data_points":"200",
+        "dataset": "swissroll",
+        "training_accuracy": "0.705",
+        "validation_accuracy": "0.644",
+        "training_loss": "7.714172244143783",
+        "validation_loss": "11.387548453792146"
+        },
+        {
+        "number_of_data_points":"200",
+        "dataset": "peaks",
+        "training_accuracy": "0.87",
+        "validation_accuracy": "0.22848",
+        "training_loss": "nan",
+        "validation_loss": "nan"
+        },
+        {
+        "number_of_data_points":"200",
+        "dataset": "gmm",
+        "training_accuracy": "0.88",
+        "validation_accuracy": "0.78576",
+        "training_loss": "nan",
+        "validation_loss": "nan"
+        }
+    ]
+}
