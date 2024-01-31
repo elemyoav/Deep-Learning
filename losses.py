@@ -1,5 +1,5 @@
 import numpy as np
-from utils import col_mean, Gradient_test
+from utils import col_mean, Gradient_test, log
 
 class SoftmaxLayer:
     """
@@ -79,7 +79,7 @@ class SoftmaxLayer:
         the loss, a scalar
         """
 
-        return np.average(-np.log(self.forward(X)) * C.T)
+        return np.average(-log(self.forward(X)) * C.T)
 
     def update_weights(self, Θ, lr):
         """

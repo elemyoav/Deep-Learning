@@ -486,48 +486,20 @@ class ResidualNeuralNetwork:
 if __name__ == '__main__':
 
 
-    N = GenericNetwork(
-                        hidden_layers= [
-                            TanhLayer(2, 2),
-                            TanhLayer(2, 2),
-                        ],
-                        output_layer= SoftmaxLayer(2, 4)
-    )
-
-
-    x = np.random.rand(2, 1)
-    N.forward(x)
-    v1 = np.random.rand(8, 1)
-    v2 = np.random.rand(8, 1)
-    u1 = N.cache[0]
-    u2 = N.cache[1]
-
-    J2_v = N.hidden_layers[1].JacΘMv(u2, v2)
-    J2_x = N.hidden_layers[1].JacxMv(u2, v1)
-    J1_v = N.hidden_layers[0].JacΘMv(u1, J2_x)
-
-    print(J1_v + J2_v)
-    # Dummy data (replace with real data)
-    # Example usage with a small neural network
-    # layer1 = ReLULayer(2, 64)  # Example sizes
-    # layer2 = ReLULayer(2, 128)
-    # layer3 = ReLULayer(2, 512)
-    loss_layer = SoftmaxLayer(2, 2)
-
-    NN = GenericNetwork(
-        loss_layer,
-        [
-            # layer1,
-            # layer2,
-            # layer3
-        ]
-    )
+    network = GenericNetwork(
+                        hidden_layers=[
+                                ReLULayer(2, 64), 
+                                ReLULayer(64, 512),
+                                ReLULayer(512, 1024),
+                                ],
+                        output_layer= SoftmaxLayer(1024, 2),
+                        )
     swissroll = scipy.io.loadmat('HW1_Data(1)/SwissRollData.mat')
-    Xt = swissroll['Yt'][:, 0].reshape(-1, 1)
+    Xt = swissroll['Yt']
     Yt = swissroll['Ct']
     Xv = swissroll['Yv']
     Yv = swissroll['Cv']
 
-    NetworkJacobianTest(NN, Xt)
+    print(network.loss(Xt, Yt))
 
 

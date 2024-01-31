@@ -411,3 +411,16 @@ def NetworkJacobianTest(N, x, residual=False):
     plt.yscale('log')
     plt.legend()
     plt.show()
+
+def log(x):
+    """
+    A function that adds a small number to x to avoid taking the log of 0.
+
+    Parameters:
+    x (numpy.ndarray): The input data.
+
+    Returns:
+    numpy.ndarray: The log of x.
+    """
+    
+    return np.log(x + 1e-10)
