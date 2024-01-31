@@ -4,21 +4,21 @@
     "epochs": "100",
     "hiddenlayers":[
         {
-            "hidden_units":"128",
+            "hidden_units":"256",
             "activation": "relu"
         },
         {
-            "hidden_units":"256",
+            "hidden_units":"1024",
             "activation": "relu"
         }
     ],
     "results":[{
         "number_of_data_points":"20000",
         "dataset": "swissroll",
-        "training_accuracy": "0.94365",
-        "validation_accuracy": "0.9376",
-        "training_loss": "0.20301216922496126",
-        "validation_loss": "0.21884423348756932"
+        "training_accuracy": "0.96325",
+        "validation_accuracy": "0.9608",
+        "training_loss": "0.3283231125816793",
+        "validation_loss": "0.3240178395955385"
         },
         {
         "number_of_data_points":"20000",

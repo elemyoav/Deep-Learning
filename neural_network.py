@@ -223,14 +223,20 @@ class GenericNetwork:
         a vector of size (output_size, 1)
         """
 
-        self.forward(x)
-        Vs = [ v[i: i + layer.size()] for i, layer in enumerate(self.hidden_layers)]
+        # grads = []
+        # self.forward_Θ(x)
+        # grad = self.output_layer.grad_Θ(self.cache[-1], v)
+        # dx 
+        # grads.append(grad)
+        # for i, layer in reversed(list(enumerate(self.hidden_layers))):
+        #     grad = layer.JacΘTMv(self.cache[i], dx)
+        #     grads.append(grad)
+        #     dx = layer.JacxTMv(self.cache[i], dx)
 
-        Jv = self.output_layer.JacΘMv(self.cache[-1], Vs[-1])
-        for i, layer in reversed(list(enumerate(self.hidden_layers[:-1]))):
-            Jv += layer.JacΘTMv(self.cache[i], self.hidden_layers[i+1].JacxMv(self.cache[i+1], Vs[i]))
-
-        return Jv
+        # self.clear_cache()
+        # grads.reverse()
+        # return np.vstack(grads)
+        pass
     
     def forward_Θ(self, X, Θ=None):
         """

@@ -79,7 +79,7 @@ class SoftmaxLayer:
         the loss, a scalar
         """
 
-        return np.sum(-np.log(self.forward(X)) * C.T) / X.shape[1]
+        return np.average(-np.log(self.forward(X)) * C.T)
 
     def update_weights(self, Θ, lr):
         """
